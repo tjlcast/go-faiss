@@ -19,7 +19,8 @@ func NewIndexFlat(d int, metric int) (*IndexFlat, error) {
 	if c := C.faiss_IndexFlat_new_with(
 		&idx.idx,
 		C.idx_t(d),
-		C.FaissMetricType(metric),
+		// C.FaissMetricType(metric),
+		C.METRIC_L2,
 	); c != 0 {
 		return nil, getLastError()
 	}

@@ -3,6 +3,8 @@ package faiss
 /*
 #include <stdlib.h>
 #include <faiss/c_api/Index_c.h>
+#include <faiss/c_api/IndexIVFFlat_c.h>
+#include <faiss/c_api/IndexFlat_c.h>
 #include <faiss/c_api/impl/AuxIndexStructures_c.h>
 #include <faiss/c_api/index_factory_c.h>
 */
@@ -214,10 +216,23 @@ type IndexImpl struct {
 // IndexFactory builds a composite index.
 // description is a comma-separated list of components.
 func IndexFactory(d int, description string, metric int) (*IndexImpl, error) {
-	cdesc := C.CString(description)
-	defer C.free(unsafe.Pointer(cdesc))
-	var idx faissIndex
-	c := C.faiss_index_factory(&idx.idx, C.int(d), cdesc, C.FaissMetricType(metric))
+	var nlist = 100;
+	var idx faissIndex;
+ 	var quantizer faissIndex
+	if c := C.faiss_IndexFlat_new_with(
+		&quantizer.idx,
+		C.idx_t(d),
+		C.METRIC_L2,
+	); c != 0 {
+		return nil, getLastError()
+	}
+
+ 	c := C.faiss_IndexIVFFlat_new_with(&idx.idx, quantizer.idx, C.ulong(d), C.ulong(nlist));
+
+	// cdesc := C.CString(description)
+	// defer C.free(unsafe.Pointer(cdesc))
+	// var idx faissIndex
+	// c := C.faiss_index_factory(&idx.idx, C.int(d), cdesc, /*C.FaissMetricType(metric)*/ C.METRIC_L2)
 	if c != 0 {
 		return nil, getLastError()
 	}
